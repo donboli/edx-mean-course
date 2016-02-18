@@ -6,10 +6,12 @@ module.exports = function(wagner) {
 
   var Category = mongoose.model('Category', require('./category'), 'categories');
   var Product = mongoose.model('Product', require('./product'), 'products');
+  var User = mongoose.model('User', require('./user'), 'users');
 
   var models = {
     Category: Category,
-    Product: Product
+    Product: Product,
+    User: User
   };
 
   // To ensure DRY-ness, register factories in a loop
@@ -19,8 +21,5 @@ module.exports = function(wagner) {
     });
   });
 
-  return {
-    Category: Category,
-    Product: Product
-  }
+  return models;
 }

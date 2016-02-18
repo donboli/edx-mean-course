@@ -1,8 +1,46 @@
 var express = require('express');
 var status = require('http-status');
+var bodyparser = require('body-parser');
 
 module.exports = function(wagner) {
   var api = express.Router();
+
+  api.use(bodyparser.json());
+
+  api.put('/me/cart', wagner.invoke(function(User){
+    return function(req, res){
+      try {
+        var cart = req.body.data.cart;
+      }catch(e){
+        return res.
+          status(status.BAD_REQUEST).
+          json({ error: 'No cart specified' });
+      }
+
+      req.user.data.cart = cart;
+      req.user.save(function(error, user){
+        if(error){
+          return res.
+            status(status.INTERNAL_SERVER_ERROR).
+            json({ error: error.toString() });
+        }
+        return res.json({ user: user });
+      })
+    }
+  }));
+
+  api.get('/me', function(req, res){
+    if(!req.user){
+      return res.
+        status(status.UNAUTHORIZED).
+        json({ error: 'Not logged in' });
+    }
+
+    req.user.populate(
+      { path: 'data.cart.product', model: 'Product' },
+      handleOne.bind(null, 'user', res)
+    );
+  });
 
   api.get('/product/id/:id', wagner.invoke(function(Product){
     return function(req, res){
@@ -50,14 +88,7 @@ module.exports = function(wagner) {
       Category.
         find({ parent: req.params.id }).
         sort({ _id: 1 }).
-        exec(function(error, categories){
-          if(error){
-            return res.
-              status(status.INTERNAL_SERVER_ERROR).
-              json({ error: error.toString() });
-          }
-          res.json({ categories: categories });
-        })
+        exec(handleMany.bind(null, 'categories', res));
     }
   }));
 
@@ -92,8 +123,7 @@ function handleMany(property, res, error, result){
       status(status.NOT_FOUND).
       json({ error: error.toString() });
   }
-
   var json = {};
   json[property] = result;
   res.json(json);
-}
+};
