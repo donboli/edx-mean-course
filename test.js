@@ -214,4 +214,24 @@ describe('User Checkout', function() {
       });
     });
   });
+
+  it('can search by text', function(){
+    var url = URL_ROOT + '/product/text/asus';
+    // Get products whose name contains 'asus'
+    superagent.get(url, function(error, res){
+      assert.ifError(error);
+      assert.equal(res.status, status.OK);
+
+      var result;
+      assert.doesNotThrow(function(){
+        results = JSON.parse(res.text).products;
+      });
+
+      // Expect that we got the Zenbook Prime back
+      assert.equal(results.length, 1);
+      assert.equal(results[0].category._id, PRODUCT_ID);
+      assert.equal(results[0].name, 'Asus Zenbook Prime');
+      done();
+    });
+  });
 });

@@ -94,10 +94,39 @@ module.exports = function(wagner) {
     };
   }));
 
+  api.get('/product/text/:query', wagner.invoke(function(Product){
+    return function(req, res){
+      Product.
+        find(
+          { $text: { $search : req.params.query } },
+          { $score: { $meta : 'textScore' } }).
+        sort({ score: { $meta : 'textScore' } }).
+        limit(10).
+        exec(handleMany.bind(null, 'products', res));
+    }
+  }));
+
   return api;
 };
 
 function handleOne(property, res, error, result) {
+  if (error) {
+    return res.
+      status(status.INTERNAL_SERVER_ERROR).
+      json({ error: error.toString() });
+  }
+  if (!result) {
+    return res.
+      status(status.NOT_FOUND).
+      json({ error: 'Not found' });
+  }
+
+  var json = {};
+  json[property] = result;
+  res.json(json);
+}
+
+function handleMany(property, res, error, result) {
   if (error) {
     return res.
       status(status.INTERNAL_SERVER_ERROR).
