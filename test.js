@@ -18,14 +18,18 @@ describe('User Checkout', function() {
     var app = express();
 
     // Bootstrap server
-    models = require('./models')(wagner);
-    dependencies = require('./dependencies')(wagner);
+    require('./models')(wagner);
+    require('./dependencies')(wagner);
 
     // Make models available in tests
-    Category = models.Category;
-    Product = models.Product;
-    Stripe = dependencies.Stripe;
-    User = models.User;
+    var deps = wagner.invoke(function(Category, Product, Stripe, User){
+      return {
+        Category: Category,
+        Product: Product,
+        Stripe: Stripe,
+        User: User
+      }
+    });
 
     app.use(function(req, res, next) {
       User.findOne({}, function(error, user) {
